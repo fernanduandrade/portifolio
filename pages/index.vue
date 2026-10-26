@@ -3,10 +3,26 @@
     <div class="container">
       <!-- Hero -->
       <section class="hero animate-in">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          {{ heroRole }}
+        </div>
         <h1 class="hero-name">Fernando Andrade</h1>
-        <p class="hero-role">{{ $t('hero.role') }}</p>
-        <p class="hero-bio">{{ $t('hero.bio') }}</p>
+        <p class="hero-lead">{{ heroLead }}</p>
+        <p v-if="heroBio" class="hero-bio">{{ heroBio }}</p>
         <div class="hero-links">
+          <a
+            :href="locale === 'pt' ? '/curriculum/CV_PT.pdf' : '/curriculum/CV_EN.pdf'"
+            class="hero-link hero-link-primary"
+            :download="locale === 'pt' ? 'CV-PT-BR.pdf' : 'CV-EN.pdf'"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            {{ $t('home.cvTitle') }}
+          </a>
           <a href="https://github.com/fernanduandrade" target="_blank" rel="noopener" class="hero-link">
             <IconGithub /> GitHub
           </a>
@@ -19,33 +35,48 @@
           <a href="mailto:fernandu.contact@gmail.com" class="hero-link">
             <IconEmail /> Email
           </a>
-          <a
-            :href="locale === 'pt' ? '/curriculum/CV_PT.pdf' : '/curriculum/CV_EN.pdf'"
-            class="hero-link"
-            :download="locale === 'pt' ? 'CV-PT-BR.pdf' : 'CV-EN.pdf'"
-          >
-            [ {{ $t('home.cvTitle') }} ]
-          </a>
         </div>
       </section>
 
       <!-- Latest Posts -->
       <section class="section">
         <div class="section-header">
-          <h2 class="section-title">{{ $t('home.latestPosts') }}</h2>
+          <div class="section-heading">
+            <span class="section-index">01</span>
+            <h2 class="section-title">{{ $t('home.latestPosts') }}</h2>
+          </div>
           <NuxtLinkLocale to="/blog" class="view-all">{{ $t('home.viewAllPosts') }}</NuxtLinkLocale>
         </div>
         <div class="post-list">
           <NuxtLinkLocale
-            v-for="(post, index) in latestPosts"
+            v-if="featuredPost"
+            :to="postHref(featuredPost)"
+            class="post-featured animate-in"
+            :aria-label="`${t('home.featuredPostLabel')} — ${featuredPost.title}`"
+          >
+            <div class="post-featured-top">
+              <span class="post-featured-label">{{ $t('home.featuredPostLabel') }}</span>
+              <span class="post-featured-date">{{ formatDate(featuredPost.date) }}</span>
+            </div>
+            <h3 class="post-featured-title">{{ featuredPost.title }}</h3>
+            <p class="post-featured-desc">{{ featuredPost.description }}</p>
+            <div class="post-featured-foot">
+              <span v-if="featuredPost.category" class="post-tag" :class="featuredPost.category.toLowerCase()">
+                {{ categoryLabel(featuredPost.category) }}
+              </span>
+              <span v-for="tag in (featuredPost.tags || []).slice(0, 3)" :key="tag" class="post-hashtag">#{{ tag }}</span>
+              <span class="post-featured-cta">{{ $t('home.readArticle') }}</span>
+            </div>
+          </NuxtLinkLocale>
+          <NuxtLinkLocale
+            v-for="post in otherPosts"
             :key="post._path"
             :to="postHref(post)"
-            :class="['post-item', 'animate-in', { 'post-item-featured': index === 0 }]"
-            :aria-label="index === 0 ? `${t('home.featuredPostLabel')} — ${post.title}` : post.title"
+            class="post-item animate-in"
+            :aria-label="post.title"
           >
             <span class="post-date">{{ formatDate(post.date) }}</span>
             <div class="post-info">
-              <span v-if="index === 0" class="featured-pill">{{ $t('home.featuredPostLabel') }}</span>
               <div class="post-title">{{ post.title }}</div>
               <div class="post-excerpt">{{ post.description }}</div>
             </div>
@@ -59,7 +90,10 @@
       <!-- Projects -->
       <section class="section">
         <div class="section-header">
-          <h2 class="section-title">{{ $t('home.projects') }}</h2>
+          <div class="section-heading">
+            <span class="section-index">02</span>
+            <h2 class="section-title">{{ $t('home.projects') }}</h2>
+          </div>
           <NuxtLinkLocale to="/projects" class="view-all">{{ $t('home.viewAllProjects') }}</NuxtLinkLocale>
         </div>
         <div class="projects-grid">
@@ -71,12 +105,17 @@
             target="_blank"
             rel="noopener"
           >
-            <div class="project-icon">{{ project.icon }}</div>
+            <div class="project-card-head">
+              <div class="project-icon">{{ project.icon }}</div>
+              <svg class="project-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="7" y1="17" x2="17" y2="7" />
+                <polyline points="7 7 17 7 17 17" />
+              </svg>
+            </div>
             <div class="project-name">{{ project.name }}</div>
             <div class="project-desc">{{ project.description }}</div>
-            <div class="project-tech">
-              <span class="tech-dot"></span>
-              {{ projectTech(project) }}
+            <div class="tech-chips">
+              <span v-for="tech in project.tech" :key="tech" class="tech-chip">{{ tech }}</span>
             </div>
           </a>
         </div>
@@ -85,12 +124,18 @@
       <!-- Now -->
       <section class="section">
         <div class="section-header">
-          <h2 class="section-title">{{ $t('home.now') }}</h2>
+          <div class="section-heading">
+            <span class="section-index">03</span>
+            <h2 class="section-title">{{ $t('home.now') }}</h2>
+          </div>
           <NuxtLinkLocale to="/now" class="view-all">{{ $t('home.moreOnNow') }}</NuxtLinkLocale>
         </div>
         <div class="now-item">
           <span class="now-dot"></span>
-          <span>{{ t('now.sections.focus.content') }}</span>
+          <div>
+            <div class="now-label">{{ t('now.sections.focus.title') }}</div>
+            <p class="now-text">{{ t('now.sections.focus.content') }}</p>
+          </div>
         </div>
       </section>
     </div>
@@ -138,6 +183,17 @@ const { data: posts } = await useAsyncData(`home-posts-${locale.value}`, () =>
 )
 
 const latestPosts = computed(() => posts.value || [])
+const featuredPost = computed(() => latestPosts.value[0])
+const otherPosts = computed(() => latestPosts.value.slice(1))
+
+// Primeira frase da bio vira o destaque do hero; o restante fica como texto de apoio.
+const heroRole = computed(() => t('hero.role').replace(/\.$/, ''))
+const heroBioParts = computed(() => {
+  const [lead, ...rest] = t('hero.bio').split(/(?<=\.)\s+/)
+  return { lead, rest: rest.join(' ') }
+})
+const heroLead = computed(() => heroBioParts.value.lead)
+const heroBio = computed(() => heroBioParts.value.rest)
 
 const { data: githubProjects } = useGithubProjects()
 
@@ -163,6 +219,7 @@ function formatDate(dateStr) {
   const date = new Date(dateStr)
   const localeMap = { pt: 'pt-BR', en: 'en-US', es: 'es-ES' }
   return date.toLocaleDateString(localeMap[locale.value] || 'pt-BR', {
+    timeZone: 'UTC',
     year: 'numeric',
     month: 'short',
     day: 'numeric',
