@@ -35,6 +35,10 @@
 </template>
 
 <script setup>
+// Importa o JSON diretamente: com useFetch, o SSR não enxerga arquivos de public/
+// e o erro 404 ia no payload, deixando a lista vazia após um refresh.
+import bookmarks from '~/public/data/bookmarks.json'
+
 const { locale, t } = useI18n()
 
 useSeoMeta({
@@ -42,10 +46,8 @@ useSeoMeta({
   description: t('bookmarks.subtitle'),
 })
 
-const { data: bookmarks } = await useFetch('/data/bookmarks.json')
-
 const groupedBookmarks = computed(() => {
-  const list = (bookmarks.value || [])
+  const list = bookmarks
     .map((item) => ({
       ...item,
       dateObj: new Date(item.date),
